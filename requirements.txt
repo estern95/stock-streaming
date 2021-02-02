@@ -3,3 +3,4 @@ beautifulsoup4
 requests
 bs4
 lxml
+json
