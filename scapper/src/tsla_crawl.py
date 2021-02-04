@@ -75,4 +75,4 @@ while True:
     publish_message(kafka_producer, 'TSLA_puts', 'raw', str(puts))
     kafka_producer.close()
     ix += 1
-    sleep(10)
+    sleep(1)
