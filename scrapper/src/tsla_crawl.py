@@ -26,7 +26,7 @@ def get_trades(class_,
         if r.status_code == 200:
             html = r.text
             soup = BeautifulSoup(html, 'html.parser')
-            table = soup.find_all('table', class_ = class_)[0] # Grab the first table
+            table = soup.find('table', class_ = class_)
     except Exception as ex:
         print('Exception in get_trades')
         print(str(ex))
@@ -35,8 +35,6 @@ def get_trades(class_,
 
 def publish_message(producer_instance, topic_name, key, value):
     try:
-        #print(key)
-        #print(value)
         key_bytes =  bytes(key, encoding='utf-8')   #.encode('utf-8')
         value_bytes = bytes(value, encoding='utf-8') #encode('utf-8')
         
@@ -46,6 +44,46 @@ def publish_message(producer_instance, topic_name, key, value):
     except Exception as ex:
         print('Exception in publishing message')
         print(str(ex))
+
+def publish(soup_in, topic, producer):
+    response = []
+    table = soup_in.find_all('tr')[1:] # remove header from list
+    for trade in table:
+        contract = trade.find('a',{'class' : 'Fz(s) Ell C($linkColor)'})
+        last_trade_dt = trade.find('td',{'class' : 'data-col1 Ta(end) Pstart(7px)'})
+        strike = trade.find('a',{'class' : 'C($linkColor) Fz(s)'})
+        last_price = trade.find('td',{'class' : 'data-col3 Ta(end) Pstart(7px)'})
+        bid = trade.find('td',{'class' : 'data-col4 Ta(end) Pstart(7px)'})
+        ask = trade.find('td',{'class' : 'data-col5 Ta(end) Pstart(7px)'})
+        change = trade.find('td',{'class' : 'data-col6 Ta(end) Pstart(7px)'})
+        pct_change = trade.find('td',{'class' : 'data-col7 Ta(end) Pstart(7px)'})
+        volume = trade.find('td',{'class' : 'data-col8 Ta(end) Pstart(7px)'})
+        open_interest = trade.find('td',{'class' : 'data-col9 Ta(end) Pstart(7px)'})
+        implied_volatility = trade.find('td',{'class' : 'data-col10 Ta(end) Pstart(7px) Pend(6px) Bdstartc(t)'})
+
+        parsed_trade = {
+            'contract' : contract,
+            'last_trade_dt' : last_trade_dt,
+            'strike' : strike,
+            'last_price' : last_price,
+            'bid' : bid,
+            'ask' : ask,
+            'change' : change,
+            'pct_change' : pct_change,
+            'volume' : volume,
+            'open_interest' : open_interest,
+            'implied_volatility' : implied_volatility
+        }
+
+        for key, obs in parsed_trade.items():
+            try:
+                parsed_trade[key] = obs.text.strip()
+            except:
+                print('fail to parse observation {}', obs)
+                parsed_trade[key] = ''
+
+        publish_message(producer, topic, 'clean', json.dumps(parsed_trade))
+
 
 def connect_kafka_producer(server_address = ['localhost:9092']):
     _producer = None
@@ -59,20 +97,18 @@ def connect_kafka_producer(server_address = ['localhost:9092']):
 
 if __name__ == "__main__":
     ix = 0
+    while True:
+        print('Scraping...')
+        if ix == 10:
+            print('Exiting')
+            break
+        kafka_producer = connect_kafka_producer()
+        calls = get_trades(class_ = calls_class)
+        publish(calls, 'TSLA_calls', kafka_producer)
 
-while True:
-    print('Scraping...')
-    if ix == 10:
-        print('Exiting')
-        break
-    calls = get_trades(class_ = calls_class)
-    kafka_producer = connect_kafka_producer()
-    publish_message(kafka_producer, 'TSLA_calls', 'raw', str(calls))
-    kafka_producer.close()
-
-    puts = get_trades(class_ = puts_class)
-    kafka_producer = connect_kafka_producer()
-    publish_message(kafka_producer, 'TSLA_puts', 'raw', str(puts))
-    kafka_producer.close()
-    ix += 1
-    sleep(1)
+        puts = get_trades(class_ = puts_class)
+        publish(puts, 'TSLA_puts', kafka_producer)
+        kafka_producer.close()
+        ix += 1
+        
+        sleep(10)
