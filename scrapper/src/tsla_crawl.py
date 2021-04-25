@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from kafka import KafkaConsumer, KafkaProducer
 import requests
 
+servers = ['172.21.0.1']
 # -*- coding: utf-8 -*-
 calls_class = 'calls W(100%) Pos(r) Bd(0) Pt(0) list-options'
 puts_class = 'puts W(100%) Pos(r) list-options'
@@ -85,7 +86,7 @@ def publish(soup_in, topic, producer):
         publish_message(producer, topic, 'clean', json.dumps(parsed_trade))
 
 
-def connect_kafka_producer(server_address = ['localhost:9092']):
+def connect_kafka_producer(server_address = servers):
     _producer = None
     try:
         _producer = KafkaProducer(bootstrap_servers = server_address, api_version=(0, 10))
@@ -110,5 +111,5 @@ if __name__ == "__main__":
         publish(puts, 'TSLA_puts', kafka_producer)
         kafka_producer.close()
         ix += 1
-        
+        print('Scrapped successfully. Sleeping for 10 seconds')
         sleep(10)
