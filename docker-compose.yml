@@ -24,8 +24,11 @@ services:
     image: stonks_scrapper
     ports:
      - "7000:7000"
+    links:
+      - my-redis
   kafka:
     build: .
+    name: my_kafka
     ports:
      - "9092:9092"
     expose:
