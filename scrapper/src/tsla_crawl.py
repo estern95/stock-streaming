@@ -7,7 +7,8 @@ from bs4 import BeautifulSoup
 from kafka import KafkaConsumer, KafkaProducer
 import requests
 
-servers = ['172.21.0.1']
+servers = ['kafka:9093']
+print(servers)
 # -*- coding: utf-8 -*-
 calls_class = 'calls W(100%) Pos(r) Bd(0) Pt(0) list-options'
 puts_class = 'puts W(100%) Pos(r) list-options'
