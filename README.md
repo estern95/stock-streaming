@@ -1,6 +1,6 @@
 # stock-streaming
 
-This is an end-to-end app utilizing kafka, spark on the Databricks runtime, and Docker+ docker-compose.
+This is an end-to-end app utilizing kafka, spark on the Databricks runtime, and Docker + docker-compose. The stream is then processed with the Spark Structured Streaming Module to generate stock predictions based on options buying behavior.
 
 ## Helpful Resources
 
