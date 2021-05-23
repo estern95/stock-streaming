@@ -9,6 +9,7 @@ This is an end-to-end app utilizing kafka, spark on the Databricks runtime, and 
 
 ### Kafka Troubleshooting
 [Connectivity FAQ](https://github.com/wurstmeister/kafka-docker/wiki/Connectivity)
+[Kafka Networking](https://rmoff.net/2018/08/02/kafka-listeners-explained/)
 [Kafka Docker Tutorial](http://wurstmeister.github.io/kafka-docker/)
 
 ### Spark Streaming
