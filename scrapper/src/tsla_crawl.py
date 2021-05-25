@@ -152,5 +152,5 @@ if __name__ == "__main__":
             err_sleep = 5*sleep_len
             print('Sleeping for {} seconds'.format(err_sleep))
             sleep(err_sleep)
-        finally:
+
             
