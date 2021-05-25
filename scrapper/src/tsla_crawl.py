@@ -66,45 +66,48 @@ def publish_message(producer_instance, topic_name, key, value):
 
 def publish(soup_in, topic, producer, stock_price, option_date):
     response = []
-    table = soup_in.find_all('tr')[1:] # remove header from list
-    for trade in table:
-        contract = trade.find('a',{'class' : 'Fz(s) Ell C($linkColor)'})
-        last_trade_dt = trade.find('td',{'class' : 'data-col1 Ta(end) Pstart(7px)'})
-        strike = trade.find('a',{'class' : 'C($linkColor) Fz(s)'})
-        last_price = trade.find('td',{'class' : 'data-col3 Ta(end) Pstart(7px)'})
-        bid = trade.find('td',{'class' : 'data-col4 Ta(end) Pstart(7px)'})
-        ask = trade.find('td',{'class' : 'data-col5 Ta(end) Pstart(7px)'})
-        change = trade.find('td',{'class' : 'data-col6 Ta(end) Pstart(7px)'})
-        pct_change = trade.find('td',{'class' : 'data-col7 Ta(end) Pstart(7px)'})
-        volume = trade.find('td',{'class' : 'data-col8 Ta(end) Pstart(7px)'})
-        open_interest = trade.find('td',{'class' : 'data-col9 Ta(end) Pstart(7px)'})
-        implied_volatility = trade.find('td',{'class' : 'data-col10 Ta(end) Pstart(7px) Pend(6px) Bdstartc(t)'})
+    try:
+        table = soup_in.find_all('tr')[1:] # remove header from list
+        for trade in table:
+            contract = trade.find('a',{'class' : 'Fz(s) Ell C($linkColor)'})
+            last_trade_dt = trade.find('td',{'class' : 'data-col1 Ta(end) Pstart(7px)'})
+            strike = trade.find('a',{'class' : 'C($linkColor) Fz(s)'})
+            last_price = trade.find('td',{'class' : 'data-col3 Ta(end) Pstart(7px)'})
+            bid = trade.find('td',{'class' : 'data-col4 Ta(end) Pstart(7px)'})
+            ask = trade.find('td',{'class' : 'data-col5 Ta(end) Pstart(7px)'})
+            change = trade.find('td',{'class' : 'data-col6 Ta(end) Pstart(7px)'})
+            pct_change = trade.find('td',{'class' : 'data-col7 Ta(end) Pstart(7px)'})
+            volume = trade.find('td',{'class' : 'data-col8 Ta(end) Pstart(7px)'})
+            open_interest = trade.find('td',{'class' : 'data-col9 Ta(end) Pstart(7px)'})
+            implied_volatility = trade.find('td',{'class' : 'data-col10 Ta(end) Pstart(7px) Pend(6px) Bdstartc(t)'})
 
-        parsed_trade = {
-            'price'    : stock_price,
-            'contract' : contract,
-            'last_trade_dt' : last_trade_dt,
-            'strike' : strike,
-            'last_price' : last_price,
-            'bid' : bid,
-            'ask' : ask,
-            'change' : change,
-            'pct_change' : pct_change,
-            'volume' : volume,
-            'open_interest' : open_interest,
-            'implied_volatility' : implied_volatility
-        }
+            parsed_trade = {
+                'price'    : stock_price,
+                'contract' : contract,
+                'last_trade_dt' : last_trade_dt,
+                'strike' : strike,
+                'last_price' : last_price,
+                'bid' : bid,
+                'ask' : ask,
+                'change' : change,
+                'pct_change' : pct_change,
+                'volume' : volume,
+                'open_interest' : open_interest,
+                'implied_volatility' : implied_volatility
+            }
 
-        for key, obs in parsed_trade.items():
-            try:
-                parsed_trade[key] = obs.text.strip()
-            except:
-                print('fail to parse observation {}', obs)
-                parsed_trade[key] = ''
+            for key, obs in parsed_trade.items():
+                try:
+                    parsed_trade[key] = obs.text.strip()
+                except:
+                    print('fail to parse observation {}', obs)
+                    parsed_trade[key] = ''
 
-        parsed_trade['option_expiration'] = option_date
+            parsed_trade['option_expiration'] = option_date
 
-        publish_message(producer, topic, 'clean', json.dumps(parsed_trade))
+            publish_message(producer, topic, 'clean', json.dumps(parsed_trade))
+    except Exception as ex: 
+        print('Failed to scrape due to exception {}'.format(ex))
 
 
 def connect_kafka_producer(server_address):
@@ -124,21 +127,27 @@ if __name__ == "__main__":
     sleep_len = int(argv[2])
     #ix = 0
     while True:
-        print('Scraping...')
-        #if ix == 10:
-        #   print('Exiting')
-        #  break
-        kafka_producer = connect_kafka_producer(servers)
-        trade_dates = get_trade_dates(orig_url)
-        for date in trade_dates:
-            params_ =  {'date' : date,
-                        'straddle': 'false'}
-            calls, stock_price = get_trades(class_ = calls_class, params=params_)
-            publish(calls, 'TSLA_calls', kafka_producer, stock_price, date)
+        try:
+            print('Scraping...')
+            #if ix == 10:
+            #   print('Exiting')
+            #  break
+            kafka_producer = connect_kafka_producer(servers)
+            trade_dates = get_trade_dates(orig_url)
+            for date in trade_dates:
+                params_ =  {'date' : date,
+                            'straddle': 'false'}
+                calls, stock_price = get_trades(class_ = calls_class, params=params_)
+                publish(calls, 'TSLA_calls', kafka_producer, stock_price, date)
 
-            puts, stock_price = get_trades(class_ = puts_class, params=params_)
-            publish(puts, 'TSLA_puts', kafka_producer, stock_price, date)
-        kafka_producer.close()
-        #ix += 1
-        print('Scrapped successfully. Sleeping for {} seconds'.format(sleep_len))
-        sleep(sleep_len)
+                puts, stock_price = get_trades(class_ = puts_class, params=params_)
+                publish(puts, 'TSLA_puts', kafka_producer, stock_price, date)
+            kafka_producer.close()
+            #ix += 1
+            print('Scrapped successfully. Sleeping for {} seconds'.format(sleep_len))
+        except Exception as ex:
+            print('Exception in publishing message')
+            print(str(ex))
+            print('Sleeping for {} seconds'.format(sleep_len))
+        finally:
+            sleep(sleep_len)

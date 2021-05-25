@@ -14,4 +14,4 @@ RUN pip install -r requirements.txt
 COPY src/ .
 
 # command to run on container start
-CMD [ "python", "-u", "./tsla_crawl.py", "localhost:29094"]
+CMD [ "python", "-u", "./tsla_crawl.py", "localhost:29094", '10']
