@@ -101,7 +101,7 @@ def publish(soup_in, topic, producer, stock_price, option_date):
             except:
                 print('fail to parse observation {}', obs)
                 parsed_trade[key] = ''
-                
+
         parsed_trade['option_expiration'] = option_date
 
         publish_message(producer, topic, 'clean', json.dumps(parsed_trade))
@@ -121,6 +121,7 @@ if __name__ == "__main__":
     bs=argv[1]
     print('\n🥾 bootstrap server: {}'.format(bs))
     servers=bs
+    sleep_len = argv[2]
     ix = 0
     while True:
         print('Scraping...')
@@ -139,5 +140,5 @@ if __name__ == "__main__":
             publish(puts, 'TSLA_puts', kafka_producer, stock_price, date)
         kafka_producer.close()
         ix += 1
-        print('Scrapped successfully. Sleeping for 10 seconds')
-        sleep(10)
+        print('Scrapped successfully. Sleeping for {} seconds'.format(sleep_len))
+        sleep(sleep_len)
