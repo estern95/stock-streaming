@@ -121,13 +121,13 @@ if __name__ == "__main__":
     bs=argv[1]
     print('\n🥾 bootstrap server: {}'.format(bs))
     servers=bs
-    sleep_len = argv[2]
-    ix = 0
+    sleep_len = int(argv[2])
+    #ix = 0
     while True:
         print('Scraping...')
-        if ix == 10:
-            print('Exiting')
-            break
+        #if ix == 10:
+        #   print('Exiting')
+        #  break
         kafka_producer = connect_kafka_producer(servers)
         trade_dates = get_trade_dates(orig_url)
         for date in trade_dates:
@@ -139,6 +139,6 @@ if __name__ == "__main__":
             puts, stock_price = get_trades(class_ = puts_class, params=params_)
             publish(puts, 'TSLA_puts', kafka_producer, stock_price, date)
         kafka_producer.close()
-        ix += 1
+        #ix += 1
         print('Scrapped successfully. Sleeping for {} seconds'.format(sleep_len))
         sleep(sleep_len)
