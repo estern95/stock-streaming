@@ -145,9 +145,12 @@ if __name__ == "__main__":
             kafka_producer.close()
             #ix += 1
             print('Scrapped successfully. Sleeping for {} seconds'.format(sleep_len))
+            sleep(sleep_len)
         except Exception as ex:
             print('Exception in publishing message')
             print(str(ex))
-            print('Sleeping for {} seconds'.format(sleep_len))
+            err_sleep = 5*sleep_len
+            print('Sleeping for {} seconds'.format(err_sleep))
+            sleep(err_sleep)
         finally:
-            sleep(sleep_len)
+            
