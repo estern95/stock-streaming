@@ -35,5 +35,5 @@ services:
         - "-u"
         - "./tsla_crawl.py"
         - "kafka:9093"
-        - "10"
+        - "300"
 
